@@ -1,0 +1,37 @@
+name: Docker Push to Repo
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  docker-build-and-push-to-ecr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-region: ${{ secrets.AWS_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | \
+          docker login --username AWS --password-stdin ${{ secrets.REPOSITORY_URI }}
+
+      - name: Build Docker image
+        run: |
+          docker build -t lambda .
+
+      - name: Tag Docker image
+        run: |
+          docker tag lambda ${{ secrets.REPOSITORY_URI }}:${{ secrets.IMAGE_TAG }}
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.REPOSITORY_URI }}:${{ secrets.IMAGE_TAG }}
