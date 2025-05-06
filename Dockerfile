@@ -4,4 +4,5 @@ WORKDIR /app
 
 COPY app.py .
 
-CMD ["app.handler"]
+CMD ["python", "app.py"]
+
